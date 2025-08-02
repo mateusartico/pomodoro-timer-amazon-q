@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pomodoro Timer</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Arial', sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            color: white;
+        }
+
+        .container {
+            text-align: center;
+            background: rgba(255, 255, 255, 0.1);
+            backdrop-filter: blur(10px);
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.3);
+            max-width: 400px;
+            width: 90%;
+        }
+
+        h1 {
+            font-size: 2.5em;
+            margin-bottom: 30px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .timer-circle {
+            width: 250px;
+            height: 250px;
+            border-radius: 50%;
+            background: conic-gradient(#ff6b6b 0deg, #ff6b6b var(--progress, 0deg), rgba(255, 255, 255, 0.2) var(--progress, 0deg));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 30px;
+            position: relative;
+            transition: all 0.3s ease;
+        }
+
+        .timer-inner {
+            width: 200px;
+            height: 200px;
+            background: rgba(255, 255, 255, 0.15);
+            border-radius: 50%;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(5px);
+        }
+
+        .time-display {
+            font-size: 3em;
+            font-weight: bold;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        }
+
+        .session-type {
+            font-size: 1.2em;
+            opacity: 0.9;
+        }
+
+        .controls {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            margin-bottom: 30px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 25px;
+            font-size: 1.1em;
+            cursor: pointer;
+            transition: all 0.3s;
+            font-weight: bold;
+        }
+
+        .btn-primary {
+            background: #ff6b6b;
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: #ff5252;
+            transform: translateY(-2px);
+        }
+
+        .btn-secondary {
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            border: 2px solid rgba(255, 255, 255, 0.3);
+        }
+
+        .btn-secondary:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-2px);
+        }
+
+        .settings {
+            display: flex;
+            gap: 20px;
+            justify-content: center;
+            margin-bottom: 20px;
+            flex-wrap: wrap;
+        }
+
+        .setting-group {
+            text-align: center;
+        }
+
+        .setting-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-size: 0.9em;
+            opacity: 0.8;
+        }
+
+        .setting-group input {
+            width: 60px;
+            padding: 8px;
+            border: none;
+            border-radius: 10px;
+            text-align: center;
+            background: rgba(255, 255, 255, 0.2);
+            color: white;
+            font-size: 1em;
+        }
+
+        .setting-group input::placeholder {
+            color: rgba(255, 255, 255, 0.7);
+        }
+
+        .stats {
+            margin-top: 20px;
+            padding: 15px;
+            background: rgba(255, 255, 255, 0.1);
+            border-radius: 10px;
+        }
+
+        .stats h3 {
+            margin-bottom: 10px;
+            font-size: 1.2em;
+        }
+
+        .stats-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 10px;
+            font-size: 0.9em;
+        }
+
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px;
+            }
+
+            .timer-circle {
+                width: 200px;
+                height: 200px;
+            }
+
+            .timer-inner {
+                width: 160px;
+                height: 160px;
+            }
+
+            .time-display {
+                font-size: 2.2em;
+            }
+
+            .controls {
+                flex-direction: column;
+                align-items: center;
+            }
+
+            .settings {
+                flex-direction: column;
+                align-items: center;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🍅 Pomodoro Timer</h1>
+        
+        <div class="timer-circle" id="timerCircle">
+            <div class="timer-inner">
+                <div class="time-display" id="timeDisplay">25:00</div>
+                <div class="session-type" id="sessionType">Foco</div>
+            </div>
+        </div>
+
+        <div class="controls">
+            <button class="btn btn-primary" id="startBtn" onclick="toggleTimer()">Iniciar</button>
+            <button class="btn btn-secondary" onclick="resetTimer()">Resetar</button>
+        </div>
+
+        <div class="settings">
+            <div class="setting-group">
+                <label>Foco (min)</label>
+                <input type="number" id="workTime" value="25" min="1" max="60">
+            </div>
+            <div class="setting-group">
+                <label>Pausa (min)</label>
+                <input type="number" id="breakTime" value="5" min="1" max="30">
+            </div>
+            <div class="setting-group">
+                <label>Pausa Longa (min)</label>
+                <input type="number" id="longBreakTime" value="15" min="1" max="60">
+            </div>
+        </div>
+
+        <div class="stats">
+            <h3>📊 Estatísticas</h3>
+            <div class="stats-grid">
+                <div>Pomodoros: <span id="pomodoroCount">0</span></div>
+                <div>Pausas: <span id="breakCount">0</span></div>
+                <div>Tempo Total: <span id="totalTime">0h 0m</span></div>
+                <div>Sessão Atual: <span id="currentSession">1</span></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let timer = null;
+        let timeLeft = 25 * 60; // 25 minutos em segundos
+        let isRunning = false;
+        let currentMode = 'work'; // work, break, longBreak
+        let pomodoroCount = 0;
+        let breakCount = 0;
+        let totalSeconds = 0;
+        let currentSession = 1;
+
+        const startBtn = document.getElementById('startBtn');
+        const timeDisplay = document.getElementById('timeDisplay');
+        const sessionType = document.getElementById('sessionType');
+        const timerCircle = document.getElementById('timerCircle');
+
+        function updateDisplay() {
+            const minutes = Math.floor(timeLeft / 60);
+            const seconds = timeLeft % 60;
+            timeDisplay.textContent = `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}`;
+            
+            // Atualizar progresso circular
+            const totalTime = getCurrentModeTime() * 60;
+            const progress = ((totalTime - timeLeft) / totalTime) * 360;
+            timerCircle.style.setProperty('--progress', `${progress}deg`);
+            
+            // Atualizar tipo de sessão
+            const types = { work: 'Foco', break: 'Pausa', longBreak: 'Pausa Longa' };
+            sessionType.textContent = types[currentMode];
+            
+            // Atualizar cor do círculo
+            const colors = { work: '#ff6b6b', break: '#4ecdc4', longBreak: '#45b7d1' };
+            timerCircle.style.background = `conic-gradient(${colors[currentMode]} 0deg, ${colors[currentMode]} ${progress}deg, rgba(255, 255, 255, 0.2) ${progress}deg)`;
+        }
+
+        function getCurrentModeTime() {
+            const workTime = parseInt(document.getElementById('workTime').value);
+            const breakTime = parseInt(document.getElementById('breakTime').value);
+            const longBreakTime = parseInt(document.getElementById('longBreakTime').value);
+            
+            switch(currentMode) {
+                case 'work': return workTime;
+                case 'break': return breakTime;
+                case 'longBreak': return longBreakTime;
+                default: return workTime;
+            }
+        }
+
+        function toggleTimer() {
+            if (isRunning) {
+                pauseTimer();
+            } else {
+                startTimer();
+            }
+        }
+
+        function startTimer() {
+            isRunning = true;
+            startBtn.textContent = 'Pausar';
+            
+            timer = setInterval(() => {
+                timeLeft--;
+                totalSeconds++;
+                updateDisplay();
+                updateStats();
+                
+                if (timeLeft <= 0) {
+                    completeSession();
+                }
+            }, 1000);
+        }
+
+        function pauseTimer() {
+            isRunning = false;
+            startBtn.textContent = 'Continuar';
+            clearInterval(timer);
+        }
+
+        function resetTimer() {
+            isRunning = false;
+            clearInterval(timer);
+            startBtn.textContent = 'Iniciar';
+            timeLeft = getCurrentModeTime() * 60;
+            updateDisplay();
+        }
+
+        function completeSession() {
+            clearInterval(timer);
+            isRunning = false;
+            startBtn.textContent = 'Iniciar';
+            
+            // Notificação sonora (beep)
+            playNotification();
+            
+            if (currentMode === 'work') {
+                pomodoroCount++;
+                if (pomodoroCount % 4 === 0) {
+                    currentMode = 'longBreak';
+                } else {
+                    currentMode = 'break';
+                }
+            } else {
+                breakCount++;
+                currentMode = 'work';
+                currentSession++;
+            }
+            
+            timeLeft = getCurrentModeTime() * 60;
+            updateDisplay();
+            updateStats();
+            
+            // Auto-iniciar próxima sessão após 3 segundos
+            setTimeout(() => {
+                if (!isRunning) {
+                    startTimer();
+                }
+            }, 3000);
+        }
+
+        function playNotification() {
+            // Criar um beep simples usando Web Audio API
+            const audioContext = new (window.AudioContext || window.webkitAudioContext)();
+            const oscillator = audioContext.createOscillator();
+            const gainNode = audioContext.createGain();
+            
+            oscillator.connect(gainNode);
+            gainNode.connect(audioContext.destination);
+            
+            oscillator.frequency.value = 800;
+            oscillator.type = 'sine';
+            
+            gainNode.gain.setValueAtTime(0.3, audioContext.currentTime);
+            gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.5);
+            
+            oscillator.start(audioContext.currentTime);
+            oscillator.stop(audioContext.currentTime + 0.5);
+        }
+
+        function updateStats() {
+            document.getElementById('pomodoroCount').textContent = pomodoroCount;
+            document.getElementById('breakCount').textContent = breakCount;
+            
+            const hours = Math.floor(totalSeconds / 3600);
+            const minutes = Math.floor((totalSeconds % 3600) / 60);
+            document.getElementById('totalTime').textContent = `${hours}h ${minutes}m`;
+            
+            document.getElementById('currentSession').textContent = currentSession;
+        }
+
+        // Inicializar
+        updateDisplay();
+        updateStats();
+
+        // Atualizar timer quando configurações mudarem
+        document.getElementById('workTime').addEventListener('change', () => {
+            if (currentMode === 'work' && !isRunning) {
+                resetTimer();
+            }
+        });
+
+        document.getElementById('breakTime').addEventListener('change', () => {
+            if (currentMode === 'break' && !isRunning) {
+                resetTimer();
+            }
+        });
+
+        document.getElementById('longBreakTime').addEventListener('change', () => {
+            if (currentMode === 'longBreak' && !isRunning) {
+                resetTimer();
+            }
+        });
+    </script>
+</body>
+</html>
